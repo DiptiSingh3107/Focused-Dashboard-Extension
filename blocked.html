@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusBoard — Stay Focused</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="blocked.css">
+</head>
+<body>
+  <div class="blocked-wrapper">
+
+    <div class="shield-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+      </svg>
+    </div>
+
+    <h1 class="blocked-title">Site Blocked</h1>
+
+    <div id="focus-message-container" class="focus-message-container">
+      <p class="focus-label-small">YOUR FOCUS TODAY</p>
+      <p id="focus-message-text" class="focus-message-text">Stay focused and on task.</p>
+    </div>
+
+    <p class="blocked-domain" id="blocked-domain-text"></p>
+
+    <div class="action-group">
+      <button id="disable-focus-btn" class="btn-disable">
+        Disable Focus Mode
+      </button>
+      <button id="back-to-dashboard-btn" class="btn-back">
+        ← Back to Dashboard
+      </button>
+    </div>
+
+  </div>
+  <script src="blocked.js"></script>
+</body>
+</html>

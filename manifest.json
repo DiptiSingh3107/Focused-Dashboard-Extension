@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "FocusBoard",
+  "version": "1.0.0",
+  "description": "A calming, personalized new tab dashboard to boost your daily focus and productivity.",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications",
+    "declarativeNetRequest",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_title": "FocusBoard"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked.html", "blocked.css", "blocked.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
