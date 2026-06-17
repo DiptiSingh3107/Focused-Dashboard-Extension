@@ -1,3 +1,5 @@
+
+
 # Focused Dashboard - Chrome Extension
 
 A lightweight productivity-focused Google Chrome extension that transforms every new tab into a beautiful personal dashboard designed to help you stay focused, organized, and motivated throughout the day.
@@ -5,6 +7,8 @@ A lightweight productivity-focused Google Chrome extension that transforms every
 Manage your daily focus, tasks, Pomodoro sessions, affirmations, wallpapers, and personal wellness—all from your browser's new tab page.
 
 ---
+
+Video: https://www.linkedin.com/posts/dipti-singh-b21a0819b_ai-artificialintelligence-buildinpublic-ugcPost-7471335665709002752-mC5D/?utm_source=share&utm_medium=member_desktop&rcm=ACoAAC71JEkBSdyu_6nssZTMkAqHRJKolcLW0X0
 
 # Features
 
