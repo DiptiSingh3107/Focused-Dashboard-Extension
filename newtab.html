@@ -109,6 +109,99 @@
       </form>
       <ul id="task-list"></ul>
     </div>
+
+    <!-- Period Tracker Widget -->
+    <div id="period-tracker-widget">
+      <div class="pt-header">
+        <h3 class="task-title">Cycle Tracker</h3>
+        <button id="pt-settings-trigger" class="icon-btn-small" aria-label="Cycle Settings">
+          <svg viewBox="0 0 24 24" class="svg-icon-sm"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49-.12-.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+        </button>
+      </div>
+      <div id="pt-late-badge" class="pt-late-badge hidden">Period Late</div>
+      <div class="pt-calendar-header">
+        <button id="pt-prev-month" class="pt-nav-btn">&lsaquo;</button>
+        <span id="pt-month-label">Month YYYY</span>
+        <button id="pt-next-month" class="pt-nav-btn">&rsaquo;</button>
+      </div>
+      <div class="pt-calendar-grid" id="pt-calendar-grid">
+        <!-- Calendar days injected by JS -->
+      </div>
+      <div class="pt-legend">
+        <span class="pt-legend-item"><span class="pt-dot pt-dot-period"></span>Period</span>
+        <span class="pt-legend-item"><span class="pt-dot pt-dot-expected"></span>Expected</span>
+      </div>
+      
+      <!-- Context Menu for marking start date -->
+      <div id="pt-context-menu" class="pt-context-menu hidden">
+        <button id="pt-mark-btn" class="pt-menu-btn">Mark as Period Start</button>
+        <button id="pt-clear-btn" class="pt-menu-btn pt-menu-btn-danger">Clear Start Date</button>
+      </div>
+
+      <!-- Settings Modal specific to Period Tracker -->
+      <div id="pt-settings-modal" class="pt-settings-modal hidden">
+        <h4 class="pt-settings-title">Cycle Settings</h4>
+        <form id="pt-settings-form">
+          <div class="pt-form-group">
+            <label for="pt-cycle-length">Cycle length (days)</label>
+            <input type="number" id="pt-cycle-length" min="15" max="100" value="28" required>
+          </div>
+          <div class="pt-form-group">
+            <label for="pt-period-length">Period length (days)</label>
+            <input type="number" id="pt-period-length" min="1" max="15" value="5" required>
+          </div>
+          <div class="pt-form-actions">
+            <button type="button" id="pt-settings-cancel" class="btn btn-secondary btn-small">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-small">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Pomodoro Widget -->
+    <div id="pomodoro-widget">
+      <div class="pomodoro-header">
+        <h3 class="task-title">Pomodoro</h3>
+        <button id="pomodoro-settings-trigger" class="icon-btn-small" aria-label="Pomodoro Settings">
+          <svg viewBox="0 0 24 24" class="svg-icon-sm"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49-.12-.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+        </button>
+      </div>
+      
+      <div class="pomodoro-content">
+        <div id="pomodoro-phase-label" class="pomodoro-phase-label">Focus</div>
+        <div id="pomodoro-timer-display" class="pomodoro-timer-display">25:00</div>
+        
+        <div class="pomodoro-controls">
+          <button id="pomodoro-start-btn" class="btn btn-primary btn-small">Start</button>
+          <button id="pomodoro-pause-btn" class="btn btn-secondary btn-small hidden">Pause</button>
+          <button id="pomodoro-resume-btn" class="btn btn-primary btn-small hidden">Resume</button>
+          <button id="pomodoro-reset-btn" class="btn btn-secondary btn-small hidden">Reset</button>
+        </div>
+
+        <div id="pomodoro-count-display" class="pomodoro-count-display" title="Completed Pomodoros today">
+          <!-- Tomatoes injected here -->
+        </div>
+      </div>
+
+      <!-- Settings Modal specific to Pomodoro -->
+      <div id="pomodoro-settings-modal" class="pt-settings-modal hidden">
+        <h4 class="pt-settings-title">Timer Settings</h4>
+        <form id="pomodoro-settings-form">
+          <div class="pt-form-group">
+            <label for="pomodoro-focus-length">Focus length (min)</label>
+            <input type="number" id="pomodoro-focus-length" min="1" max="120" value="25" required>
+          </div>
+          <div class="pt-form-group">
+            <label for="pomodoro-break-length">Break length (min)</label>
+            <input type="number" id="pomodoro-break-length" min="1" max="30" value="5" required>
+          </div>
+          <div class="pt-form-actions">
+            <button type="button" id="pomodoro-settings-cancel" class="btn btn-secondary btn-small">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-small">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <!-- Settings Modal Container -->
@@ -124,13 +217,31 @@
           <input type="text" id="username-input" placeholder="Enter your name" maxlength="20" autocomplete="off">
         </div>
         <div class="form-group">
-          <label>Wallpaper Image</label>
-          <div class="file-input-wrapper">
-            <button type="button" class="btn btn-file">Choose Image</button>
-            <input type="file" id="wallpaper-input" accept="image/*">
-            <span id="file-name-label" class="file-name-text">No file chosen</span>
+          <div class="wallpaper-header">
+            <label>Wallpapers</label>
+            <span id="wallpaper-count-label" class="wallpaper-count">0 / 8</span>
           </div>
-          <p class="help-text">JPG/PNG images. Automatically optimized to fit storage.</p>
+          
+          <div class="wallpaper-controls">
+            <button type="button" class="btn btn-secondary btn-small" id="add-wallpaper-btn">Add Wallpaper</button>
+            <input type="file" id="wallpaper-upload-input" accept="image/jpeg, image/png, image/webp" style="display: none;">
+          </div>
+          
+          <div class="wallpaper-gallery" id="wallpaper-gallery">
+            <!-- Thumbnails injected here -->
+          </div>
+          
+          <p id="wallpaper-error" class="blocklist-feedback error" aria-live="polite"></p>
+          
+          <div class="wallpaper-rotation-control">
+            <label for="wallpaper-rotation-mode" class="reminder-sub-label">Rotation Mode:</label>
+            <select id="wallpaper-rotation-mode" class="settings-select">
+              <option value="newTab">Every New Tab</option>
+              <option value="daily">Daily</option>
+              <option value="manual">Manual</option>
+            </select>
+          </div>
+          <p class="help-text">JPG/PNG/WEBP images. Max 8 allowed.</p>
         </div>
         <div class="form-group">
           <label for="blocklist-input">Blocked Sites <span class="label-hint">(Focus Mode)</span></label>
@@ -163,6 +274,8 @@
   </div>
 
   <!-- Script entry -->
+  <script src="period-tracker.js"></script>
+  <script src="pomodoro.js"></script>
   <script src="newtab.js"></script>
 </body>
 </html>

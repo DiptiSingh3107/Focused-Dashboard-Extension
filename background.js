@@ -280,18 +280,14 @@ chrome.runtime.onMessage.addListener((message) => {
 const ALARM_NAME = 'checkRemindersAlarm';
 
 /**
- * Creates (or re-creates) the recurring 30-minute reminder alarm.
+ * Creates (or re-creates) the recurring 1-minute reminder alarm.
  */
 function setupReminderAlarm() {
-  chrome.alarms.get(ALARM_NAME, (existing) => {
-    if (!existing) {
-      chrome.alarms.create(ALARM_NAME, {
-        delayInMinutes: 1,       // first fire after 1 min
-        periodInMinutes: 30      // then every 30 minutes
-      });
-      console.log('FocusBoard: Reminder alarm created.');
-    }
+  chrome.alarms.create(ALARM_NAME, {
+    delayInMinutes: 1,       // first fire after 1 min
+    periodInMinutes: 1       // then every 1 minute
   });
+  console.log('FocusBoard: Reminder alarm created (1m interval).');
 }
 
 /**
@@ -359,6 +355,53 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 /**
+ * Pomodoro Alarm Handler
+ */
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name !== 'pomodoroAlarm') return;
+
+  chrome.storage.local.get(['pomodoro'], (result) => {
+    let state = result.pomodoro;
+    if (!state) return;
+
+    if (state.phase === 'focus') {
+      // Focus completed
+      state.completedPomodoros = (state.completedPomodoros || 0) + 1;
+      state.phase = 'break';
+      state.status = 'running';
+      state.phaseStartTimestamp = Date.now();
+      state.remainingSeconds = state.breakDurationMin * 60;
+      
+      showNotification(
+        'focusboard-pomodoro-focus-complete-' + Date.now(),
+        '🍅 Focus Session Complete!',
+        'Great job! Time for a short break.'
+      );
+
+      // Auto-start break timer
+      chrome.alarms.create('pomodoroAlarm', {
+        delayInMinutes: state.breakDurationMin
+      });
+
+    } else if (state.phase === 'break') {
+      // Break completed
+      state.phase = 'focus';
+      state.status = 'idle';
+      state.phaseStartTimestamp = null;
+      state.remainingSeconds = state.focusDurationMin * 60;
+
+      showNotification(
+        'focusboard-pomodoro-break-complete-' + Date.now(),
+        '⏱️ Break Over!',
+        'Ready for another focus session? Click Start when you are ready.'
+      );
+    }
+
+    chrome.storage.local.set({ pomodoro: state });
+  });
+});
+
+/**
  * Fires a Chrome desktop notification.
  * @param {string} id - Unique notification ID (prevents duplicates)
  * @param {string} title
@@ -370,7 +413,8 @@ function showNotification(id, title, message) {
     iconUrl: 'icons/icon128.png',
     title,
     message,
-    priority: 1
+    priority: 2,
+    requireInteraction: true
   });
 }
 

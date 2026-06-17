@@ -230,10 +230,52 @@ function initWallpaper() {
   const wallpaperContainer = document.getElementById('wallpaper-container');
   
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-    chrome.storage.local.get(['wallpaperDataUrl'], (result) => {
-      if (result.wallpaperDataUrl) {
+    chrome.storage.local.get(['wallpaperDataUrl', 'wallpapers', 'wallpaperRotation'], (result) => {
+      let wallpapers = result.wallpapers || [];
+      let rotation = result.wallpaperRotation || { mode: 'manual', currentIndex: 0, lastRotatedDate: null };
+      let needsSave = false;
+
+      // Migration
+      if (result.wallpaperDataUrl && wallpapers.length === 0) {
+        wallpapers.push({ id: Date.now().toString(), dataUrl: result.wallpaperDataUrl });
+        chrome.storage.local.remove(['wallpaperDataUrl']);
+        needsSave = true;
+      }
+
+      if (wallpapers.length > 0) {
+        // Clamp index
+        if (rotation.currentIndex >= wallpapers.length || rotation.currentIndex < 0) {
+          rotation.currentIndex = 0;
+          needsSave = true;
+        }
+
+        let activeWallpaper = wallpapers[rotation.currentIndex];
+
+        // Apply background immediately
         document.body.classList.add('has-wallpaper');
-        wallpaperContainer.style.backgroundImage = `url('${result.wallpaperDataUrl}')`;
+        wallpaperContainer.style.backgroundImage = `url('${activeWallpaper.dataUrl}')`;
+
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        if (rotation.mode === 'newTab') {
+          rotation.currentIndex = (rotation.currentIndex + 1) % wallpapers.length;
+          needsSave = true;
+        } else if (rotation.mode === 'daily') {
+          if (rotation.lastRotatedDate !== todayStr) {
+            rotation.currentIndex = (rotation.currentIndex + 1) % wallpapers.length;
+            rotation.lastRotatedDate = todayStr;
+            needsSave = true;
+            
+            // Re-apply since index changed
+            activeWallpaper = wallpapers[rotation.currentIndex];
+            wallpaperContainer.style.backgroundImage = `url('${activeWallpaper.dataUrl}')`;
+          }
+        }
+
+        if (needsSave) {
+          chrome.storage.local.set({ wallpapers, wallpaperRotation: rotation });
+        }
+
       } else {
         document.body.classList.remove('has-wallpaper');
         wallpaperContainer.style.backgroundImage = 'none';
@@ -252,8 +294,18 @@ function initSettings() {
   const cancelBtn = document.getElementById('settings-cancel');
   const form = document.getElementById('settings-form');
   const usernameInput = document.getElementById('username-input');
-  const wallpaperInput = document.getElementById('wallpaper-input');
-  const fileNameLabel = document.getElementById('file-name-label');
+  
+  // Wallpaper elements
+  const addWallpaperBtn = document.getElementById('add-wallpaper-btn');
+  const wallpaperUploadInput = document.getElementById('wallpaper-upload-input');
+  const wallpaperGallery = document.getElementById('wallpaper-gallery');
+  const wallpaperCountLabel = document.getElementById('wallpaper-count-label');
+  const wallpaperError = document.getElementById('wallpaper-error');
+  const rotationModeSelect = document.getElementById('wallpaper-rotation-mode');
+
+  let currentWallpapers = [];
+  let currentRotation = { mode: 'manual', currentIndex: 0, lastRotatedDate: null };
+
   const blocklistInput = document.getElementById('blocklist-input');
   const blocklistFeedback = document.getElementById('blocklist-feedback');
   const reminderTimeInput = document.getElementById('reminder-time-input');
@@ -261,18 +313,21 @@ function initSettings() {
   const testWeeklyBtn = document.getElementById('test-weekly-btn');
   const testMonthlyBtn = document.getElementById('test-monthly-btn');
 
-  let selectedWallpaperDataUrl = null;
-
   // Open modal
   triggerBtn.addEventListener('click', () => {
     // Load current settings from storage and pre-populate
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.get(['userName', 'blockedSites', 'reminderSettings'], (result) => {
+      chrome.storage.local.get(['userName', 'blockedSites', 'reminderSettings', 'wallpapers', 'wallpaperRotation'], (result) => {
         usernameInput.value = result.userName || '';
         const sites = result.blockedSites || [];
         blocklistInput.value = sites.join('\n');
         const rs = result.reminderSettings || {};
         reminderTimeInput.value = rs.dailyHoursTime || '18:00';
+        
+        currentWallpapers = result.wallpapers || [];
+        currentRotation = result.wallpaperRotation || { mode: 'manual', currentIndex: 0, lastRotatedDate: null };
+        rotationModeSelect.value = currentRotation.mode;
+        renderWallpaperGallery();
       });
     } else {
       usernameInput.value = usernameInput.value || '';
@@ -280,10 +335,8 @@ function initSettings() {
       reminderTimeInput.value = '18:00';
     }
     
-    // Reset file selection details and feedback
-    wallpaperInput.value = '';
-    fileNameLabel.textContent = 'No file chosen';
-    selectedWallpaperDataUrl = null;
+    wallpaperError.textContent = '';
+    wallpaperUploadInput.value = '';
     blocklistFeedback.textContent = '';
     blocklistFeedback.className = 'blocklist-feedback';
 
@@ -312,24 +365,111 @@ function initSettings() {
     }
   });
 
-  // Handle file input changes for wallpaper
-  wallpaperInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) {
-      fileNameLabel.textContent = 'No file chosen';
-      selectedWallpaperDataUrl = null;
+  // Handle Wallpaper actions
+  addWallpaperBtn.addEventListener('click', () => {
+    if (currentWallpapers.length >= 8) {
+      wallpaperError.textContent = 'Maximum 8 wallpapers reached. Delete one to add more.';
       return;
     }
+    wallpaperUploadInput.click();
+  });
 
-    fileNameLabel.textContent = file.name;
+  wallpaperUploadInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
+    wallpaperError.textContent = '';
+    
     const reader = new FileReader();
     reader.onload = function(event) {
-      compressWallpaper(event.target.result, (compressedBase64) => {
-        selectedWallpaperDataUrl = compressedBase64;
-      });
+      const base64 = event.target.result;
+      currentWallpapers.push({ id: Date.now().toString(), dataUrl: base64 });
+      
+      saveWallpaperState();
+      wallpaperUploadInput.value = '';
     };
     reader.readAsDataURL(file);
+  });
+
+  function renderWallpaperGallery() {
+    wallpaperGallery.innerHTML = '';
+    wallpaperCountLabel.textContent = `${currentWallpapers.length} / 8`;
+    
+    addWallpaperBtn.disabled = currentWallpapers.length >= 8;
+
+    currentWallpapers.forEach((wp, index) => {
+      const container = document.createElement('div');
+      container.className = 'wallpaper-thumbnail-container';
+      if (index === currentRotation.currentIndex) {
+        container.classList.add('active-wallpaper');
+      }
+
+      const img = document.createElement('img');
+      img.src = wp.dataUrl;
+      img.className = 'wallpaper-thumbnail';
+      
+      const previewBtn = document.createElement('button');
+      previewBtn.className = 'wallpaper-action-btn wallpaper-preview-btn';
+      previewBtn.innerHTML = '👁️';
+      previewBtn.title = 'Preview Wallpaper';
+      
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'wallpaper-action-btn wallpaper-delete-btn';
+      deleteBtn.innerHTML = '✖';
+      deleteBtn.title = 'Delete Wallpaper';
+
+      container.addEventListener('click', (e) => {
+        if (e.target === previewBtn || e.target === deleteBtn) return;
+        if (currentRotation.mode === 'manual') {
+          currentRotation.currentIndex = index;
+          saveWallpaperState();
+        }
+      });
+
+      previewBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.body.classList.add('has-wallpaper');
+        document.getElementById('wallpaper-container').style.backgroundImage = `url('${wp.dataUrl}')`;
+      });
+
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        currentWallpapers.splice(index, 1);
+        if (currentRotation.currentIndex === index) {
+          currentRotation.currentIndex = 0;
+        } else if (currentRotation.currentIndex > index) {
+          currentRotation.currentIndex--;
+        }
+        wallpaperError.textContent = '';
+        saveWallpaperState();
+      });
+
+      container.appendChild(img);
+      container.appendChild(previewBtn);
+      container.appendChild(deleteBtn);
+      wallpaperGallery.appendChild(container);
+    });
+  }
+
+  function saveWallpaperState() {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({ 
+        wallpapers: currentWallpapers, 
+        wallpaperRotation: currentRotation 
+      }, () => {
+        if (chrome.runtime.lastError) {
+           wallpaperError.textContent = 'Could not save wallpaper — storage full. Please delete an existing wallpaper first.';
+        } else {
+           renderWallpaperGallery();
+           initWallpaper();
+        }
+      });
+    }
+  }
+
+  rotationModeSelect.addEventListener('change', () => {
+    currentRotation.mode = rotationModeSelect.value;
+    saveWallpaperState();
   });
 
   // Handle Form Submit
@@ -371,17 +511,11 @@ function initSettings() {
       reminderSettings: { dailyHoursTime: reminderTimeInput.value || '18:00' }
     };
 
-    if (selectedWallpaperDataUrl) {
-      dataToSave.wallpaperDataUrl = selectedWallpaperDataUrl;
-    }
-
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
       chrome.storage.local.set(dataToSave, () => {
-        // Update greeting and background without reloading
         initGreeting();
-        if (selectedWallpaperDataUrl) {
-          initWallpaper();
-        }
+        // Background restoring logic in case a preview was left active
+        initWallpaper();
         closeModal();
       });
     } else {
@@ -396,10 +530,6 @@ function initSettings() {
       else salutation = 'Good evening';
       greetingText.textContent = `${salutation}, ${name || 'friend'}`;
 
-      if (selectedWallpaperDataUrl) {
-        document.body.classList.add('has-wallpaper');
-        document.getElementById('wallpaper-container').style.backgroundImage = `url('${selectedWallpaperDataUrl}')`;
-      }
       closeModal();
     }
   });
@@ -416,39 +546,7 @@ function initSettings() {
   testMonthlyBtn.addEventListener('click', () => sendTestNotification('monthly'));
 }
 
-/**
- * Compresses an image to fit within local storage limits (max 1920px bounding box, JPEG, 0.85 quality).
- */
-function compressWallpaper(dataUrl, callback) {
-  const img = new Image();
-  img.src = dataUrl;
-  img.onload = function() {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    const maxDim = 1920;
-    let width = img.width;
-    let height = img.height;
-    
-    if (width > maxDim || height > maxDim) {
-      if (width > height) {
-        height = Math.round((height * maxDim) / width);
-        width = maxDim;
-      } else {
-        width = Math.round((width * maxDim) / height);
-        height = maxDim;
-      }
-    }
-    
-    canvas.width = width;
-    canvas.height = height;
-    ctx.drawImage(img, 0, 0, width, height);
-    
-    // Convert to JPEG with 0.85 quality
-    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-    callback(compressedDataUrl);
-  };
-}
+// (Compression removed per PRD requirements to preserve original image quality)
 
 /**
  * Initializes the Daily Focus Prompt and display.
